@@ -16,9 +16,9 @@ type TailscaleHost struct {
 	IP       string
 }
 
-// excludeTags returns the set of tags from the EXCLUDE_TAGS env var.
+// excludeTags returns the set of tags from the TS_EXCLUDE_TAGS env var.
 func excludeTags() map[string]struct{} {
-	val := os.Getenv("EXCLUDE_TAGS")
+	val := os.Getenv("TS_EXCLUDE_TAGS")
 	if val == "" {
 		return nil
 	}
@@ -43,7 +43,7 @@ func hasExcludedTag(tags *views.Slice[string], excluded map[string]struct{}) boo
 }
 
 // ListTailscaleHosts returns all peers on the tailnet including the local node,
-// excluding any nodes that carry a tag listed in EXCLUDE_TAGS.
+// excluding any nodes that carry a tag listed in TS_EXCLUDE_TAGS.
 func ListTailscaleHosts(ctx context.Context) ([]TailscaleHost, error) {
 	var lc tailscale.LocalClient
 
