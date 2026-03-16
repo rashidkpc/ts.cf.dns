@@ -2,57 +2,50 @@
 
 A daemon written in Go, distributed as a Docker container, that syncs Tailscale hostnames to Cloudflare DNS.
 
-## Prerequisites
+## Configuration
 
-- [Go 1.23+](https://go.dev/dl/)
-- [Tailscale](https://tailscale.com/download) installed and connected to your tailnet
+All configuration is via environment variables. Copy `.env.example` to `.env` and fill in your values:
+
+```sh
+cp .env.example .env
+```
+
+| Variable | Required | Description |
+|---|---|---|
+| `CF_API_TOKEN` | Yes | Cloudflare API token with **Zone / DNS / Edit** permission |
+| `CF_DOMAIN` | Yes | Domain name of the Cloudflare zone to manage |
+| `TS_AUTHKEY` | Docker only | Tailscale auth key for connecting to your tailnet |
+| `TS_HOSTNAME` | No | Hostname to register on the tailnet (default: `ts-cf-dns`) |
+
+- Cloudflare API tokens: [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) — scope to the specific zone, DNS edit only.
+- Tailscale auth keys: [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) — use a reusable, non-ephemeral key so the container reconnects after restarts with the same identity.
 
 ## Running locally
 
-```sh
-# Install dependencies
-go mod tidy
+**Prerequisites:** [Go 1.23+](https://go.dev/dl/) and [Tailscale](https://tailscale.com/download) running.
 
-# Run directly
+```sh
+go mod tidy
+source .env
 go run .
 
-# Or build and run
+# Or build first
 go build -o ts-cf-dns .
 ./ts-cf-dns
 ```
 
-The program connects to the local `tailscaled` socket, so Tailscale must be running. On macOS, the Tailscale app satisfies this. On Linux, `tailscaled` must be running.
-
-Set the required environment variables before running:
-
-```sh
-export CF_API_TOKEN=your-cloudflare-api-token
-export CF_DOMAIN=example.com
-```
+`TS_AUTHKEY` is not needed locally — the program connects directly to the local `tailscaled` socket (the Tailscale app on macOS satisfies this).
 
 ## Running with Docker
 
-Build the image:
-
 ```sh
 docker build -t ts-cf-dns .
-```
 
-Run the container:
-
-```sh
 docker run \
   --cap-add NET_ADMIN \
-  -e TS_AUTHKEY=tskey-auth-... \
+  --env-file .env \
   -v tailscale-state:/var/lib/tailscale \
   ts-cf-dns
 ```
 
-| Environment variable | Description |
-|---|---|
-| `TS_AUTHKEY` | Tailscale auth key for connecting to your tailnet |
-| `TS_HOSTNAME` | Hostname to register on the tailnet (default: `ts-cf-dns`) |
-| `CF_API_TOKEN` | Cloudflare API token with DNS read/write permissions |
-| `CF_DOMAIN` | Domain name of the Cloudflare zone to manage |
-
-Auth keys can be generated at [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys). Use a reusable, non-ephemeral key so the container reconnects after restarts with the same identity.
+The volume persists Tailscale state across container restarts so the node keeps its identity.
