@@ -4,6 +4,8 @@ A daemon written in Go, distributed as a Docker container, that syncs Tailscale 
 
 Every 30 seconds it reconciles a Tailscale peer list against an A-record set in Cloudflare — creating, updating, and deleting records as peers come and go. Cloudflare records it creates are commented with `managed-by:ts.cf.dns`. Only records with the `managed-by:ts.cf.dns` comment are ever touched; manually created records under the same subdomain are left alone.
 
+This is intended to be run in Docker, and a docker compose configuration is included.
+
 ## Configuration
 
 All configuration is via environment variables. Copy `.env.example` to `.env` and fill in your values:
