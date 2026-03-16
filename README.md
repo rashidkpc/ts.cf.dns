@@ -23,7 +23,7 @@ cp .env.example .env
 2. Use the **Edit zone DNS** template, or create a custom token with:
    - **Permissions:** Zone / DNS / Edit
    - **Zone Resources:** Include / Specific zone / `<your domain>`
-3. Copy the generated token into `CF_DOMAIN`.
+3. Copy the generated token into `CF_API_TOKEN`.
 
 Scoping the token to a single zone limits exposure if the secret leaks.
 
