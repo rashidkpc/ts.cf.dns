@@ -16,6 +16,7 @@ cp .env.example .env
 | `CF_DOMAIN` | Yes | Domain name of the Cloudflare zone to manage |
 | `TS_AUTHKEY` | Docker only | Tailscale auth key for connecting to your tailnet |
 | `TS_HOSTNAME` | No | Hostname to register on the tailnet (default: `ts-cf-dns`) |
+| `EXCLUDE_TAGS` | No | Comma-separated Tailscale tags to exclude from DNS sync (e.g. `tag:server,tag:exit-node`) |
 
 ### Cloudflare API token
 
