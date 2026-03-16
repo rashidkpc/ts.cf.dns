@@ -28,9 +28,9 @@ else
   echo "Warning: TS_AUTHKEY is not set. Tailscale will not connect to the tailnet."
 fi
 
-# Run the main daemon if provided, otherwise keep tailscaled alive
+# Run the main daemon if provided, otherwise run the default binary
 if [ $# -gt 0 ]; then
   exec "$@"
 else
-  wait $TAILSCALED_PID
+  exec ts-cf-dns
 fi
