@@ -19,8 +19,9 @@ cp .env.example .env
 | `CF_API_TOKEN` | Yes | Cloudflare API token with **Zone / DNS / Edit** permission |
 | `CF_DOMAIN` | Yes | Domain name of the Cloudflare zone to manage |
 | `CF_SUBDOMAIN` | No | Subdomain prefix for DNS records (e.g. `ts` → `hostname.ts.example.com`; omit to place records at the zone apex) |
-| `TS_AUTHKEY` | Docker only | Tailscale auth key for connecting to your tailnet |
-| `TS_HOSTNAME` | No | Hostname to register on the tailnet (default: `ts-cf-dns`) |
+| `TS_OAUTH_CLIENT_ID` | Yes | Tailscale OAuth client ID |
+| `TS_OAUTH_CLIENT_SECRET` | Yes | Tailscale OAuth client secret |
+| `TS_TAILNET` | No | Tailnet name (default: `-`, meaning the tailnet of the authenticated client) |
 | `TS_EXCLUDE_TAGS` | No | Comma-separated Tailscale ACL tags to exclude from sync (e.g. `tag:server,tag:exit-node`) |
 
 ### Cloudflare API token
@@ -33,24 +34,23 @@ cp .env.example .env
 
 Scoping the token to a single zone limits exposure if the secret leaks.
 
-### Tailscale auth key
+### Tailscale OAuth client
 
-1. Go to [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) and click **Generate auth key**.
-2. Enable **Reusable** so the container can reconnect after restarts without generating a new key.
-3. Leave **Ephemeral** unchecked so the node persists in your tailnet between restarts.
-4. Copy the key (shown once) into `TS_AUTHKEY`.
+1. Go to [login.tailscale.com/admin/settings/oauth](https://login.tailscale.com/admin/settings/oauth) and click **Generate OAuth client**.
+2. Grant the **Devices: Read** scope — no other permissions are needed.
+3. Copy the client ID and secret into `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`.
+
+OAuth client secrets do not expire. A fresh access token is fetched automatically on every sync cycle.
 
 ## Running locally
 
-**Prerequisites:** [Go 1.23+](https://go.dev/dl/) and [Tailscale](https://tailscale.com/download) running.
+**Prerequisites:** [Go 1.23+](https://go.dev/dl/)
 
 ```sh
 go mod tidy
 source .env
 go run .
 ```
-
-`TS_AUTHKEY` is not needed locally — the program connects directly to the local `tailscaled` socket (the Tailscale app on macOS satisfies this).
 
 ### Dry run
 
@@ -83,7 +83,7 @@ go build -o ts-cf-dns .
 go test ./...
 ```
 
-The tests are unit tests with no external dependencies — no Tailscale daemon or Cloudflare credentials required.
+The tests are unit tests with no external dependencies — no Tailscale credentials or Cloudflare credentials required.
 
 ## Running with Docker
 
@@ -91,12 +91,12 @@ The tests are unit tests with no external dependencies — no Tailscale daemon o
 docker compose up --build
 ```
 
-The volume persists Tailscale state across container restarts so the node keeps its identity. The container restarts automatically unless explicitly stopped.
+The container restarts automatically unless explicitly stopped.
 
 ## How it works
 
-1. Every 30 seconds, the daemon fetches the current Tailscale peer list (including the local node) via the local Tailscale socket.
-2. It lists Cloudflare A records under `recordBase()` that carry the `managed-by:ts.cf.dns` comment.
+1. Every 30 seconds, the daemon fetches a fresh OAuth access token and calls the Tailscale API to list all devices on the tailnet.
+2. It lists Cloudflare A records under the configured base domain that carry the `managed-by:ts.cf.dns` comment.
 3. It reconciles the two sets:
    - **Missing from Cloudflare** → create A record (TTL 60, not proxied)
    - **IP changed** → update the existing record

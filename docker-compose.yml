@@ -2,11 +2,4 @@ services:
   ts-cf-dns:
     build: .
     env_file: .env
-    cap_add:
-      - NET_ADMIN
-    volumes:
-      - tailscale-state:/var/lib/tailscale
     restart: unless-stopped
-
-volumes:
-  tailscale-state:

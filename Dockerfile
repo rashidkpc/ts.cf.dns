@@ -1,5 +1,3 @@
-FROM tailscale/tailscale:stable AS tailscale
-
 FROM golang:1.23 AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -8,20 +6,7 @@ COPY *.go ./
 RUN CGO_ENABLED=0 go build -o ts-cf-dns .
 
 FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    iproute2 \
-    iptables \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/tailscale
-COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
 COPY --from=builder /app/ts-cf-dns /usr/local/bin/ts-cf-dns
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-VOLUME /var/lib/tailscale
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["ts-cf-dns"]
