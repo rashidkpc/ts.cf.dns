@@ -2,7 +2,7 @@
 
 A daemon written in Go, distributed as a Docker container, that syncs Tailscale hostnames to Cloudflare DNS.
 
-Every 30 seconds it reconciles your Tailscale peer list against an A-record set in Cloudflare — creating, updating, and deleting records as peers come and go. Only records tagged `managed-by:ts.cf.dns` are ever touched; manually created records under the same subdomain are left alone.
+Every 30 seconds it reconciles a Tailscale peer list against an A-record set in Cloudflare — creating, updating, and deleting records as peers come and go. Cloudflare records it creates are commented with `managed-by:ts.cf.dns`. Only records with the `managed-by:ts.cf.dns` comment are ever touched; manually created records under the same subdomain are left alone.
 
 ## Configuration
 
