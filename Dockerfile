@@ -2,7 +2,7 @@ FROM tailscale/tailscale:stable AS tailscale
 
 FROM golang:1.23 AS builder
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY *.go ./
 RUN CGO_ENABLED=0 go build -o ts-cf-dns .
