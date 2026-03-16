@@ -39,13 +39,7 @@ go build -o ts-cf-dns .
 ## Running with Docker
 
 ```sh
-docker build -t ts-cf-dns .
-
-docker run \
-  --cap-add NET_ADMIN \
-  --env-file .env \
-  -v tailscale-state:/var/lib/tailscale \
-  ts-cf-dns
+docker compose up --build
 ```
 
-The volume persists Tailscale state across container restarts so the node keeps its identity.
+The volume persists Tailscale state across container restarts so the node keeps its identity. The container restarts automatically unless explicitly stopped.
