@@ -1,2 +1,2 @@
 # ts.cf.dns
-Syncs Tailscale hostnames to cloudflare DNS
+A docker container that syncs Tailscale hostnames to cloudflare DNS
