@@ -2,28 +2,44 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"log"
+	"time"
 )
 
+const syncInterval = 30 * time.Second
+
 func main() {
+	dryRun := flag.Bool("dry-run", false, "log what would change without making API calls")
+	flag.Parse()
+
 	ctx := context.Background()
 
-	fmt.Println("=== Tailscale Hosts ===")
-	tsHosts, err := ListTailscaleHosts(ctx)
-	if err != nil {
-		log.Fatalf("tailscale: %v", err)
-	}
-	for _, h := range tsHosts {
-		fmt.Printf("%-40s %s\n", h.Hostname, h.IP)
-	}
-
-	fmt.Println("\n=== Cloudflare DNS Records ===")
-	cfRecords, err := ListCloudflareDNSRecords(ctx)
+	cf, err := NewCloudflareClient(ctx)
 	if err != nil {
 		log.Fatalf("cloudflare: %v", err)
 	}
-	for _, r := range cfRecords {
-		fmt.Printf("%-6s %-50s %s\n", r.Type, r.Name, r.Content)
+
+	if *dryRun {
+		log.Printf("dry-run mode enabled — no changes will be made")
+	}
+	log.Printf("starting sync loop (interval: %s, base: %s)", syncInterval, recordBase())
+
+	sync := func() {
+		hosts, err := ListTailscaleHosts(ctx)
+		if err != nil {
+			log.Printf("tailscale: %v", err)
+			return
+		}
+		if err := Sync(ctx, cf, hosts, *dryRun); err != nil {
+			log.Printf("sync error: %v", err)
+		}
+	}
+
+	sync()
+	ticker := time.NewTicker(syncInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		sync()
 	}
 }
