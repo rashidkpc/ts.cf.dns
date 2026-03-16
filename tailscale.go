@@ -10,6 +10,16 @@ import (
 	"tailscale.com/types/views"
 )
 
+// dnsLabel extracts the first label from a fully-qualified DNS name.
+// e.g. "my-device.tailnet-name.ts.net." -> "my-device"
+func dnsLabel(dnsName string) string {
+	name := strings.TrimSuffix(dnsName, ".")
+	if i := strings.IndexByte(name, '.'); i != -1 {
+		return name[:i]
+	}
+	return name
+}
+
 // TailscaleHost holds the hostname and primary IP of a Tailscale peer.
 type TailscaleHost struct {
 	Hostname string
@@ -58,7 +68,7 @@ func ListTailscaleHosts(ctx context.Context) ([]TailscaleHost, error) {
 
 	if len(status.Self.TailscaleIPs) > 0 && !hasExcludedTag(status.Self.Tags, excluded) {
 		hosts = append(hosts, TailscaleHost{
-			Hostname: status.Self.HostName,
+			Hostname: dnsLabel(status.Self.DNSName),
 			IP:       status.Self.TailscaleIPs[0].String(),
 		})
 	}
@@ -66,7 +76,7 @@ func ListTailscaleHosts(ctx context.Context) ([]TailscaleHost, error) {
 	for _, peer := range status.Peer {
 		if len(peer.TailscaleIPs) > 0 && !hasExcludedTag(peer.Tags, excluded) {
 			hosts = append(hosts, TailscaleHost{
-				Hostname: peer.HostName,
+				Hostname: dnsLabel(peer.DNSName),
 				IP:       peer.TailscaleIPs[0].String(),
 			})
 		}
