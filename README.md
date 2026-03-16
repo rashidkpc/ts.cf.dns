@@ -17,8 +17,22 @@ cp .env.example .env
 | `TS_AUTHKEY` | Docker only | Tailscale auth key for connecting to your tailnet |
 | `TS_HOSTNAME` | No | Hostname to register on the tailnet (default: `ts-cf-dns`) |
 
-- Cloudflare API tokens: [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) — scope to the specific zone, DNS edit only.
-- Tailscale auth keys: [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) — use a reusable, non-ephemeral key so the container reconnects after restarts with the same identity.
+### Cloudflare API token
+
+1. Go to [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) and click **Create Token**.
+2. Use the **Edit zone DNS** template, or create a custom token with:
+   - **Permissions:** Zone / DNS / Edit
+   - **Zone Resources:** Include / Specific zone / `<your domain>`
+3. Copy the generated token into `CF_DOMAIN`.
+
+Scoping the token to a single zone limits exposure if the secret leaks.
+
+### Tailscale auth key
+
+1. Go to [login.tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys) and click **Generate auth key**.
+2. Enable **Reusable** so the container can reconnect after restarts without generating a new key.
+3. Leave **Ephemeral** unchecked so the node persists in your tailnet between restarts.
+4. Copy the key (shown once) into `TS_AUTHKEY`.
 
 ## Running locally
 
